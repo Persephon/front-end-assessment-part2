@@ -1,0 +1,24 @@
+.phone-container {
+    width: 320px;
+    height: 600px;
+    border: 2px solid black;
+    background-color: #e8e8e8;
+    border-radius: 20px;
+    margin: 20px auto;
+    overflow: auto;
+}
+
+.phone-container::-webkit-scrollbar {
+    width: 26px;
+    height: 26px;
+}
+
+.phone-container::-webkit-scrollbar-thumb {
+    height: 40%;
+    background-color: #598ff3;
+    background-clip: padding-box;
+    border-width: 9px;
+    border-style: solid;
+    border-color: transparent;
+    border-radius: 14px;
+}

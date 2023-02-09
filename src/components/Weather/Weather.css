@@ -1,0 +1,37 @@
+.weather-container {
+    display: flex;
+    padding: 15px 20px 15px 15px;
+}
+
+.weather-container > div {
+    width: 50%;
+}
+
+.current-weather {
+    display: flex;
+    justify-content: center;
+}
+
+.temperature {
+    font-size: 24px;
+}
+
+.conditions {
+    font-size: 11px;
+}
+
+.location {
+    font-size: 11px;
+    text-align: right;
+}
+
+.upcoming {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.upcoming > div {
+    text-align: center;
+    font-size: 11px;
+}

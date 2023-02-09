@@ -12,6 +12,7 @@ import Condition from './components/Condition/Condition';
 /*
 TODO: Add types for list and variable
 TODO: Refactor to a class component to make clarify state management and state type
+TODO: Add icons to the button components
 */
 const App = () => {
     const { id } = useParams<{ id: string }>();

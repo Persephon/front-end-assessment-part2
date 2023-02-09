@@ -9,22 +9,28 @@ import Image from './components/Image/Image';
 import Button from './components/Button/Button';
 import Condition from './components/Condition/Condition';
 
+/*
+TODO: Add types for list and variable
+TODO: Refactor to a class component to make clarify state management and state type
+*/
 const App = () => {
     const { id } = useParams<{ id: string }>();
     const [components, setComponents] = useState<Array<ComponentData>>([]);
-    const [variables, setVariables] = useState([]);
+    const [variables, setVariables] = useState<Array<any>>([]);
     const [lists, setLists] = useState<Array<any>>([]);
 
     const fetchPageData = useCallback(async () => {
         const unparsedResult = await fetch(`http://localhost:3030/page/${id}`);
         const parsedResult = await unparsedResult.json();
 
-        setVariables(parsedResult.data.variables);
+        setVariables(parsedResult.data.variables.map((variable: any) => {
+            return {
+                ...variable,
+                value: variable.initialValue,
+            }
+        }));
         setLists(parsedResult.data.lists);
-
         setComponents(parsedResult.data.components);
-
-        
     }, [id]);
 
     useEffect(() => {
@@ -32,29 +38,22 @@ const App = () => {
     }, [fetchPageData])
 
     const onButtonClicked = (variableName: string, value: string) => {
-        const currentCondition: any | undefined = components.find((component: ComponentData) => {
-            if (isConditionComponentData(component)) {
-                return component.options.variable === variableName;
-            }
-            
-            return false;
+        const currentVariable: any | undefined = variables.find((variable: any) => {
+            return variable.name === variableName;
         });
 
-        if (!currentCondition) {
-            console.log('condition not found by variable name');
+        if (!currentVariable) {
+            console.log('variable not found by variable name');
             return;
         }
 
-        setComponents([
-            ...components.filter((component: ComponentData) => component.id !== currentCondition.id),
+        setVariables([
+            ...variables.filter((variable: any) => variable.name !== variableName),
             {
-                ...currentCondition,
-                options:{
-                    ...currentCondition.options,
-                    value: value,
-                }
+                ...currentVariable,
+                value: value,
             }
-        ]);
+        ])
     }
 
     const createComponentHtml = function (componentId: number) {
@@ -96,7 +95,7 @@ const App = () => {
                 return <div key={component.id}>Matching variable for condtion not found</div>;
             }
 
-            return (<Condition key={component.id} isShown={component.options.value === 'show' ? true : false}>                     
+            return (<Condition key={component.id} isShown={component.options.value === currentVariable.value ? true : false}>                     
                 {currentList ? 
                     currentList.components.map((componentId: number) => {
                         return createComponentHtml(componentId);
@@ -111,9 +110,10 @@ const App = () => {
     if (!lists.length)
         return <div>loading</div>;
 
-    /*TODO: Update this return statement to show all of the lists not just the first one
-     Also, must solve the problem of rendering duplicate components because of the 
-     recursive call to createComponentHtml when the component is a condition
+    /*
+        Assumption: the first list inclueds all of the components 
+        that are condtional components or are not included inside a conditional component.
+        Therefore, we can loop through the initial list to display the components necessary.
     */
     return (
         <div className='phone-container'>

@@ -1,68 +1,62 @@
 import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import { ComponentData, isButtonComponentData, isConditionComponentData, isImageComponentData, isWeatherComponentData, ListData, VariableData } from './app.types';
+import { BaseProps, ComponentData, isButtonComponentData, isConditionComponentData, isImageComponentData, isWeatherComponentData, ListData, VariableData } from './app.types';
 import './app.css';
 
 import Weather from './components/Weather/Weather';
 import Image from './components/Image/Image';
 import Button from './components/Button/Button';
 import Condition from './components/Condition/Condition';
+import React from 'react';
 
 /*
-TODO: Refactor to a class component to make clarify state management and state type
+TODO: Add loading images for the app and the weather component to prevent flashing and improve UX
 TODO: Add icons to the button components
 TODO: Add css preprocessor
 */
-const App = () => {
-    const { id } = useParams<{ id: string }>();
-    const [components, setComponents] = useState<Array<ComponentData>>([]);
-    const [variables, setVariables] = useState<Array<VariableData>>([]);
-    const [lists, setLists] = useState<Array<ListData>>([]);
 
-    const fetchPageData = useCallback(async () => {
-        const unparsedResult = await fetch(`http://localhost:3030/page/${id}`);
-        const parsedResult = await unparsedResult.json();
+type AppProps = { pageId: string } & BaseProps;
 
-        setVariables(parsedResult.data.variables.map((variable: VariableData) => {
-            return {
-                ...variable,
-                value: variable.initialValue,
-            }
-        }));
-        setLists(parsedResult.data.lists);
-        setComponents(parsedResult.data.components);
-    }, [id]);
+type AppState = {
+    components: Array<ComponentData>; 
+    variables: Array<VariableData>;
+    lists: Array<ListData>;
+};
 
-    useEffect(() => {
-        fetchPageData();
-    }, [fetchPageData])
+class App extends React.Component<AppProps, AppState> {
+    state: AppState = {
+        components: [],
+        variables: [],
+        lists: [],
+    };
 
-    const onButtonClicked = (variableName: string, value: string) => {
-        const currentVariable: VariableData | undefined = variables.find((variable: VariableData) => {
-            return variable.name === variableName;
-        });
-
-        console.log(components);
-        console.log(variables);
-        console.log(lists);
-
-        if (!currentVariable) {
-            console.log('variable not found by variable name');
-            return;
-        }
-
-        setVariables([
-            ...variables.filter((variable: VariableData) => variable.name !== variableName),
-            {
-                ...currentVariable,
-                value: value,
-            }
-        ])
+    componentDidMount () {
+        this.loadPageData();
     }
 
-    const createComponentHtml = function (componentId: number) {
-        const possibleComponent: ComponentData | undefined = components.find((component: ComponentData) => componentId === component.id);
+    /*
+        Assumption: the first list inclueds all of the components 
+        that are condtional components or are not included inside a conditional component.
+        Therefore, we can loop through the initial list to display the components necessary.
+    */
+    render () {
+        if (!this.state.lists.length)
+            return <div>loading</div>;
+
+        return (
+            <div className='phone-container'>
+                {this.state.lists[0].components.map((componentId: number) => {
+                    return this.createComponentHtml(componentId);
+                })}
+            </div>
+        );
+    }
+    
+    createComponentHtml (componentId: number) {
+        const possibleComponent: ComponentData | undefined = this.state.components
+            .find((component: ComponentData) => componentId === component.id);
+
         if (!possibleComponent) {
             return <div key={componentId}>Component from list not found</div>;
         }
@@ -83,7 +77,7 @@ const App = () => {
         }
         if (isButtonComponentData(component)) {
             return <div key={componentId}
-                onClick={() => {onButtonClicked(component.options.variable, component.options.value)}}>
+                onClick={() => {this.onButtonClicked(component.options.variable, component.options.value)}}>
                 <Button 
                     text={component.options.text} 
                     variable={component.options.variable}
@@ -91,10 +85,10 @@ const App = () => {
             </div>;
         }
         if (isConditionComponentData(component)) {
-            const currentList: ListData | undefined = lists.find((list: ListData) => list.id === component.children);
+            const currentList: ListData | undefined = this.state.lists.find((list: ListData) => list.id === component.children);
 
             const currentVariable: VariableData | undefined = 
-                variables.find((variable: any) => component.options.variable === variable.name);
+                this.state.variables.find((variable: any) => component.options.variable === variable.name);
             
             if(!currentVariable) {
                 return <div key={component.id}>Matching variable for condtion not found</div>;
@@ -103,7 +97,7 @@ const App = () => {
             return (<Condition key={component.id} isShown={component.options.value === currentVariable.value ? true : false}>                     
                 {currentList ? 
                     currentList.components.map((componentId: number) => {
-                        return createComponentHtml(componentId);
+                        return this.createComponentHtml(componentId);
                     })
                 : ''}
                 </Condition>
@@ -112,21 +106,48 @@ const App = () => {
         return '<div>Component type not found.</div>';
     };
 
-    if (!lists.length)
-        return <div>loading</div>;
+    onButtonClicked (variableName: string, value: string) {
+        const currentVariable: VariableData | undefined = this.state.variables.find((variable: VariableData) => {
+            return variable.name === variableName;
+        });
 
-    /*
-        Assumption: the first list inclueds all of the components 
-        that are condtional components or are not included inside a conditional component.
-        Therefore, we can loop through the initial list to display the components necessary.
-    */
-    return (
-        <div className='phone-container'>
-            {lists[0].components.map((componentId: number) => {
-                return createComponentHtml(componentId);
-            })}
-        </div>
-    );
-};
+        if (!currentVariable) {
+            console.log('variable not found by variable name');
+            return;
+        }
 
-export default App;
+        this.setState({
+            components: this.state.components,
+            lists: this.state.lists,
+            variables: [
+                ...this.state.variables.filter((variable: VariableData) => variable.name !== variableName),
+                {
+                    ...currentVariable,
+                    value: value,
+                }
+            ]
+        })
+    }
+
+    async loadPageData () {
+        const unparsedResult = await fetch(`http://localhost:3030/page/${this.props.pageId}`);
+        const parsedResult = await unparsedResult.json();
+
+        this.setState({
+            components: parsedResult.data.components,
+            lists: parsedResult.data.lists,
+            variables: parsedResult.data.variables ? parsedResult.data.variables.map((variable: VariableData) => {
+                return {
+                    ...variable,
+                    value: variable.initialValue,
+                }
+            }) : [],
+        });
+    }
+}
+
+function withParams<P>(Component: any) {
+    return (props: P) => <Component {...props} pageId={useParams<{id: string}>().id} />;
+}
+
+export default withParams(App);

@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { BaseProps, ComponentData, isButtonComponentData, isConditionComponentData, isImageComponentData, isWeatherComponentData, ListData, VariableData } from './app.types';
 import './app.css';

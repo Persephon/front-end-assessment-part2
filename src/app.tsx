@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import { ComponentData, isButtonComponentData, isConditionComponentData, isImageComponentData, isWeatherComponentData } from './app.types';
+import { ComponentData, isButtonComponentData, isConditionComponentData, isImageComponentData, isWeatherComponentData, ListData, VariableData } from './app.types';
 import './app.css';
 
 import Weather from './components/Weather/Weather';
@@ -10,7 +10,6 @@ import Button from './components/Button/Button';
 import Condition from './components/Condition/Condition';
 
 /*
-TODO: Add types for list and variable
 TODO: Refactor to a class component to make clarify state management and state type
 TODO: Add icons to the button components
 TODO: Add css preprocessor
@@ -18,14 +17,14 @@ TODO: Add css preprocessor
 const App = () => {
     const { id } = useParams<{ id: string }>();
     const [components, setComponents] = useState<Array<ComponentData>>([]);
-    const [variables, setVariables] = useState<Array<any>>([]);
-    const [lists, setLists] = useState<Array<any>>([]);
+    const [variables, setVariables] = useState<Array<VariableData>>([]);
+    const [lists, setLists] = useState<Array<ListData>>([]);
 
     const fetchPageData = useCallback(async () => {
         const unparsedResult = await fetch(`http://localhost:3030/page/${id}`);
         const parsedResult = await unparsedResult.json();
 
-        setVariables(parsedResult.data.variables.map((variable: any) => {
+        setVariables(parsedResult.data.variables.map((variable: VariableData) => {
             return {
                 ...variable,
                 value: variable.initialValue,
@@ -40,9 +39,13 @@ const App = () => {
     }, [fetchPageData])
 
     const onButtonClicked = (variableName: string, value: string) => {
-        const currentVariable: any | undefined = variables.find((variable: any) => {
+        const currentVariable: VariableData | undefined = variables.find((variable: VariableData) => {
             return variable.name === variableName;
         });
+
+        console.log(components);
+        console.log(variables);
+        console.log(lists);
 
         if (!currentVariable) {
             console.log('variable not found by variable name');
@@ -50,7 +53,7 @@ const App = () => {
         }
 
         setVariables([
-            ...variables.filter((variable: any) => variable.name !== variableName),
+            ...variables.filter((variable: VariableData) => variable.name !== variableName),
             {
                 ...currentVariable,
                 value: value,
@@ -88,9 +91,9 @@ const App = () => {
             </div>;
         }
         if (isConditionComponentData(component)) {
-            const currentList: any | undefined = lists.find((list: any) => list.id === component.children);
+            const currentList: ListData | undefined = lists.find((list: ListData) => list.id === component.children);
 
-            const currentVariable: any | undefined = 
+            const currentVariable: VariableData | undefined = 
                 variables.find((variable: any) => component.options.variable === variable.name);
             
             if(!currentVariable) {

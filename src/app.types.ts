@@ -74,3 +74,16 @@ export function isConditionComponentData (componentData: ComponentData): compone
 export type BaseProps = { 
     children?: ReactNode | undefined 
 }
+
+export interface ListData {
+    components: Array<number>;
+    id: number;
+}
+
+// TODO: Change to support data types besides string
+export interface VariableData {
+    name: string;
+    type: string;
+    initialValue: string;
+    value: string;
+}

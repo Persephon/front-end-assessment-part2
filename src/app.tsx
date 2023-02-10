@@ -1,5 +1,14 @@
 import { useParams } from 'react-router';
-import { BaseProps, ComponentData, isButtonComponentData, isConditionComponentData, isImageComponentData, isWeatherComponentData, ListData, VariableData } from './app.types';
+import { 
+    BaseProps, 
+    ComponentData, 
+    isButtonComponentData, 
+    isConditionComponentData, 
+    isImageComponentData, 
+    isWeatherComponentData, 
+    ListData, 
+    VariableData 
+} from './app.types';
 import './app.css';
 
 import Weather from './components/Weather/Weather';
@@ -9,7 +18,8 @@ import Condition from './components/Condition/Condition';
 import React from 'react';
 
 /*
-TODO: Add loading images for the app and the weather component to prevent flashing and improve UX
+TODO: Add loading images for the app and the weather component that have minimum display times 
+    to prevent flashing and improve UX
 TODO: Add icons to the button components
 TODO: Add css preprocessor
 */
@@ -34,7 +44,7 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     /*
-        Assumption: the first list inclueds all of the components 
+        Assumption: the first list includes all of the components 
         that are condtional components or are not included inside a conditional component.
         Therefore, we can loop through the initial list to display the components necessary.
     */
@@ -132,8 +142,8 @@ class App extends React.Component<AppProps, AppState> {
         const parsedResult = await unparsedResult.json();
 
         this.setState({
-            components: parsedResult.data.components,
-            lists: parsedResult.data.lists,
+            components: parsedResult.data.components ?? [],
+            lists: parsedResult.data.lists ?? [],
             variables: parsedResult.data.variables ? parsedResult.data.variables.map((variable: VariableData) => {
                 return {
                     ...variable,

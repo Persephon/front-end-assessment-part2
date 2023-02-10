@@ -15,6 +15,7 @@ type WeatherState = {
     temperature: number;
     unit: string;
     upcoming: UpcomingWeatherData[];
+    isLoading: boolean;
 };
 
 type UpcomingWeatherData = {
@@ -33,8 +34,9 @@ export class Weather extends React.Component<WeatherProps, WeatherState> {
         temperature: 0,
         unit: '',
         upcoming: [],
+        isLoading: true,
     };
-    
+
     componentDidMount () {
         this.loadWeatherData();
     }
@@ -52,12 +54,17 @@ export class Weather extends React.Component<WeatherProps, WeatherState> {
                     temperature: res.data.temperature,
                     unit: res.data.unit,
                     upcoming: res.data.upcomming,
+                    isLoading: false,
                 });
             }) 
             .catch(error => console.log(error));
     }
 
     render() {
+        if(this.state.isLoading) {
+            return <div>Loading...</div>;
+        }
+
         return (<Card>
             <div className='weather-container'>
                 <div>
